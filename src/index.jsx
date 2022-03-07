@@ -20,27 +20,22 @@ class Board extends React.Component {
             onClick={() => this.props.onClick(i, y, x)}/>;
     }
 
-    render() {
+    render(props) {
 
-        return (
-            <div>
+        let i = 0
+        let row = 3, column = 3
+
+        return <div>
+            {new Array(row).fill(null).map((item, y) =>
                 <div className="board-row">
-                    {this.renderSquare(0, 1, 1)}
-                    {this.renderSquare(1, 1, 2)}
-                    {this.renderSquare(2, 1, 3)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(3, 2, 1)}
-                    {this.renderSquare(4, 2, 2)}
-                    {this.renderSquare(5, 2, 3)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(6, 3, 1)}
-                    {this.renderSquare(7, 3, 2)}
-                    {this.renderSquare(8, 3, 3)}
-                </div>
-            </div>
-        );
+                    {
+                        new Array(column).fill(null).map((item, x) =>
+                            this.renderSquare(i++, y + 1, x + 1))
+                    }
+                </div>)
+            }
+        </div>
+
     }
 }
 
