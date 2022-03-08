@@ -5,7 +5,7 @@ import './index.css';
 
 function Square(props) {
     return (
-        <button className="square" onClick={() => props.onClick()}>
+        <button title="" className="square" onClick={() => props.onClick()}>
             {props.value}
         </button>
     )
@@ -16,22 +16,19 @@ class Board extends React.Component {
 
     renderSquare(i, y, x) {
         return <Square
-            value={this.props.squares[i]}
+            value={this.props.squares[i]} key={i}
             onClick={() => this.props.onClick(i, y, x)}/>;
     }
 
     render(props) {
 
         let i = 0
-        let row = 3, column = 3
+        let arr = [1, 2, 3]
 
         return <div>
-            {new Array(row).fill(null).map((item, y) =>
-                <div className="board-row">
-                    {
-                        new Array(column).fill(null).map((item, x) =>
-                            this.renderSquare(i++, y + 1, x + 1))
-                    }
+            {arr.map(y =>
+                <div className="board-row" key={y}>
+                    {arr.map(x => this.renderSquare(i++, y, x))}
                 </div>)
             }
         </div>
@@ -41,21 +38,53 @@ class Board extends React.Component {
 
 class Game extends React.Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            history: [
+                {
+                    squares: Array(9).fill(null),
+                    x: 0,  // 行号
+                    y: 0, // 列号
+                    step: 0, // 当前步骤
+                }
+            ],
+            isSort: true, // 升降序 true 升 false 降
+            stepNumber: 0,
+            xIsNext: true
+        }
+    }
+
     handleClick(i, y, x) {
-        const history = this.state.history.slice(0, this.state.stepNumber + 1)
-        const current = history[history.length - 1]
+        let history, current
+        if (this.state.isSort) {
+            history = this.state.history.slice(0, this.state.stepNumber + 1)
+            current = history[history.length - 1]
+        } else {
+            history = this.state.history.slice(this.state.history.findIndex(item => item.step === this.state.stepNumber))
+            current = history[0]
+        }
         const squares = current.squares.slice()
         if (calculateWinner(squares) || squares[i]) {
             return
         }
         squares[i] = this.state.xIsNext ? 'X' : 'O'
+
+        const data = {
+            squares: squares,
+            x: x,
+            y: y,
+            step: history.length
+        }
+        if (this.state.isSort) {
+            history.push(data)
+        } else {
+            history.unshift(data)
+        }
+
         this.setState({
-            history: history.concat([{
-                squares: squares,
-                x: x,
-                y: y
-            }]),
-            stepNumber: history.length,
+            history: history,
+            stepNumber: history.length - 1,
             xIsNext: !this.state.xIsNext
         })
     }
@@ -68,35 +97,29 @@ class Game extends React.Component {
 
     }
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            history: [
-                {
-                    squares: Array(9).fill(null),
-                    x: 0,
-                    y: 0,
-                }
-            ],
-            stepNumber: 0,
-            xIsNext: true
-        }
+    sortHistory() {
+        const history = this.state.history
+        history.reverse()
+        this.setState({
+            history: history,
+            isSort: !this.state.isSort,
+        })
     }
 
     render() {
         const history = this.state.history
-        const current = history[this.state.stepNumber];
+        const current = history.find(item => item.step === this.state.stepNumber)
         const winner = calculateWinner(current.squares)
 
-        const moves = history.map((step, move) => {
-            const desc = move
-                ? 'Get to move # ' + move + ' y: ' + step.y + ' x:' + step.x
+        const moves = history.map((item, move) => {
+            const desc = item.step
+                ? 'Get to move # ' + item.step + ' y: ' + item.y + ' x:' + item.x
                 : 'Get to game start'
             return (
                 <li key={move}>
                     <button style={{
-                        fontWeight: this.state.stepNumber == move ? 'bolder' : 'normal'
-                    }} onClick={() => this.jumpTo(move)}>{desc}</button>
+                        fontWeight: this.state.stepNumber == item.step ? 'bolder' : 'normal'
+                    }} onClick={() => this.jumpTo(item.step)}>{desc}</button>
                 </li>
             )
         })
@@ -117,34 +140,15 @@ class Game extends React.Component {
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
+                    <button onClick={() => this.sortHistory()}>
+                        {this.state.isSort ? '降' : '升'}序
+                    </button>
                     <ol>{moves}</ol>
                 </div>
             </div>
         );
     }
 }
-
-/**
- * 临时用来做测试的看看是怎么只更新字符串的
- */
-
-// class DateView extends React.Component {
-//     render() {
-//         return (<div>
-//                 <h1>Hello, world!</h1>
-//                 <h2>It is {new Date().toLocaleTimeString()}.</h2>
-//             </div>
-//         )
-//     }
-//
-// }
-//
-// window.timeI = setInterval(() =>
-//     ReactDOM.render(
-//         <DateView/>,
-//         document.getElementById('root')
-//     ), 1000
-// )
 
 // ========================================
 
