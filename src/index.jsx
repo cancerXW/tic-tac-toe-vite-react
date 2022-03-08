@@ -4,8 +4,9 @@ import './index.css';
 
 
 function Square(props) {
+
     return (
-        <button title="" className="square" onClick={() => props.onClick()}>
+        <button title="" style={props.style} className="square" onClick={() => props.onClick()}>
             {props.value}
         </button>
     )
@@ -15,8 +16,12 @@ class Board extends React.Component {
 
 
     renderSquare(i, y, x) {
+        let color = this.props.win.findIndex(item => item === i) > -1 ? 'yellow' : '#fff'
         return <Square
             value={this.props.squares[i]} key={i}
+            style={{
+                backgroundColor: color
+            }}
             onClick={() => this.props.onClick(i, y, x)}/>;
     }
 
@@ -93,14 +98,15 @@ class Game extends React.Component {
         const history = this.state.history.slice()
         const current = history[this.state.stepNumber];
         const winner = calculateWinner(current.squares)
+
         if (this.state.isSort) {
             history.reverse()
         }
 
         const moves = history.map((item, move) => {
             const desc = item.step
-                ? 'Get to move # ' + item.step + ' y: ' + item.y + ' x:' + item.x
-                : 'Get to game start'
+                ? '回退第' + item.step + '步（' + item.y + '行' + item.x + '列）'
+                : '游戏开始'
             return (
                 <li key={move}>
                     <button style={{
@@ -110,18 +116,24 @@ class Game extends React.Component {
             )
         })
 
-        let status
+        let status, ids = []
         if (winner) {
-            status = 'Winner: ' + winner
+            status = winner.win + ' 赢'
+            ids = winner.ids
         } else {
-            status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O')
+            if (history.length > 9 && this.state.stepNumber === 9) {
+                status = '平局'
+            } else {
+                status = '下一步: ' + (this.state.xIsNext ? 'X' : 'O')
+            }
         }
+
 
         return (
             <div className="game">
                 <div className="game-board">
                     <Board
-                        squares={current.squares}
+                        squares={current.squares} win={ids}
                         onClick={(i, y, x) => this.handleClick(i, y, x)}/>
                 </div>
                 <div className="game-info">
@@ -157,7 +169,10 @@ function calculateWinner(squares) {
     for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
+            return {
+                win: squares[a],
+                ids: lines[i]
+            };
         }
     }
     return null;
