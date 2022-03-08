@@ -49,42 +49,28 @@ class Game extends React.Component {
                     step: 0, // 当前步骤
                 }
             ],
-            isSort: true, // 升降序 true 升 false 降
+            isSort: false, // 升降序 false 升 true 降
             stepNumber: 0,
             xIsNext: true
         }
     }
 
     handleClick(i, y, x) {
-        let history, current
-        if (this.state.isSort) {
-            history = this.state.history.slice(0, this.state.stepNumber + 1)
-            current = history[history.length - 1]
-        } else {
-            history = this.state.history.slice(this.state.history.findIndex(item => item.step === this.state.stepNumber))
-            current = history[0]
-        }
+        const history = this.state.history.slice(0, this.state.stepNumber + 1)
+        const current = history[history.length - 1]
         const squares = current.squares.slice()
         if (calculateWinner(squares) || squares[i]) {
             return
         }
         squares[i] = this.state.xIsNext ? 'X' : 'O'
-
-        const data = {
-            squares: squares,
-            x: x,
-            y: y,
-            step: history.length
-        }
-        if (this.state.isSort) {
-            history.push(data)
-        } else {
-            history.unshift(data)
-        }
-
         this.setState({
-            history: history,
-            stepNumber: history.length - 1,
+            history: history.concat([{
+                squares: squares,
+                x: x,
+                y: y,
+                step: history.length
+            }]),
+            stepNumber: history.length,
             xIsNext: !this.state.xIsNext
         })
     }
@@ -98,18 +84,18 @@ class Game extends React.Component {
     }
 
     sortHistory() {
-        const history = this.state.history
-        history.reverse()
         this.setState({
-            history: history,
             isSort: !this.state.isSort,
         })
     }
 
     render() {
-        const history = this.state.history
-        const current = history.find(item => item.step === this.state.stepNumber)
+        const history = this.state.history.slice()
+        const current = history[this.state.stepNumber];
         const winner = calculateWinner(current.squares)
+        if (this.state.isSort) {
+            history.reverse()
+        }
 
         const moves = history.map((item, move) => {
             const desc = item.step
